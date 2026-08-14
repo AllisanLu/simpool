@@ -1,98 +1,87 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { AppShell } from '@/components/app-shell';
+import { EventCard } from '@/components/event-card';
+import { mockEvents } from '@/data/mock-data';
+import type { PoolEvent } from '@/types/pool';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+export default function PoolDashboardPage() {
+  const router = useRouter();
+  const [events] = useState<PoolEvent[]>(mockEvents);
+
+  const handleOpenEvent = (event: PoolEvent) => {
+    router.push({
+      pathname: '/event',
+      params: {
+        mode: 'dashboard',
+        eventId: String(event.id),
+        eventName: event.name,
+        eventDescription: event.description,
+      },
+    } as never);
+  };
+
+  const handleCreateNewEvent = () => {
+    router.push({ pathname: '/event', params: { mode: 'create' } } as never);
+  };
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <AppShell>
+      <View style={styles.pageContainer}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>My Events</Text>
+          <Pressable style={styles.linkButton} onPress={() => router.push('/event' as never)}>
+            <Text style={styles.linkText}>+ New</Text>
+          </Pressable>
+        </View>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <View style={styles.cardList}>
+          {events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              onOpen={() => router.push('/event' as never)}
+              onCreate={() => router.push('/event' as never)}
+            />
+          ))}
+        </View>
+      </View>
+    </AppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  pageContainer: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#ededed',
+    paddingHorizontal: 18,
+    paddingTop: 24,
+  },
+  titleRow: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    marginBottom: 20,
   },
   title: {
-    textAlign: 'center',
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#1d1d1d',
   },
-  code: {
-    textTransform: 'uppercase',
+  linkButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  linkText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  cardList: {
+    gap: 8,
   },
 });
